@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KTB's Veg Culinary Journey</title>
+    <style>
+        :root {
+            --primary: #800020;
+            --primary-dark: #5a0017;
+            --accent: #d4af37;
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+            --text-light: #f4f4f4;
+            --text-muted: #b0b0b0;
+            --border-color: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 18, 18, 0.96);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            border: 2px solid var(--accent);
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .auth-card h2 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-size: 1.6rem;
+        }
+
+        .auth-card p {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 12px 15px;
+            background: #2a2a2a;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .auth-card input:focus {
+            border-color: var(--accent);
+        }
+
+        .auth-card button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .auth-card button:hover {
+            background: var(--primary-dark);
+        }
+
+        .error-msg {
+            color: #ff6b6b;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        #app-container {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-dark), #2a0008);
+            border-bottom: 3px solid var(--accent);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            color: var(--accent);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        header p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            font-style: italic;
+        }
+
+        .toolbar {
+            background: var(--card-bg);
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 600px;
+            min-width: 280px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            background: #2a2a2a;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+        }
+
+        main {
+            flex: 1;
+            padding: 30px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            border-color: var(--accent);
+        }
+
+        .card-img-container {
+            width: 100%;
+            height: 220px;
+            background: #252525;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .card:hover .card-img-container img {
+            transform: scale(1.05);
+        }
+
+        .badge-kcal {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(128, 0, 32, 0.9);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border: 1px solid var(--accent);
+            backdrop-filter: blur(4px);
+        }
+
+        .card-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .card-title {
+            color: var(--accent);
+            font-size: 1.3rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .section-block h4 {
+            color: #ffccd5;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .section-block p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            padding-left: 15px;
+        }
+
+        footer.site-footer {
+            text-align: center;
+            padding: 20px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Authentication Screen -->
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <h2>Authentication Required</h2>
+            <p>Enter dynamic access code</p>
+            <input type="password" id="password-input" placeholder="••••" autocomplete="current-password">
+            <button onclick="verifyPassword()">Access Journey</button>
+            <div id="error-message" class="error-msg">Incorrect password. Please try again.</div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app-container">
+        <header>
+            <h1>Welcome to KTB's Veg Culinary Scientific Journey</h1>
+            <p>Explore rigorous scientific classifications, precise nutritional breakdowns, and traditional culinary methods across 51 master recipes[cite: 1].</p>
+        </header>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search 1. Dish | 2. Kcals | 3. Ingredients | 4. Scientific classification | 5. Cooking methods..." onkeyup="filterDishes()">
+            </div>
+        </div>
+
+        <main>
+            <div class="grid" id="dishes-grid"></div>
+        </main>
+
+        <footer class="site-footer">
+            <p>&copy; 2026 KTB's Veg Culinary Scientific Journey. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        const dishes = [
+            {
+                name: "1. Aloo Paratha with Butter",
+		kcal: "320 Kcals",
+		image: "",
+		ingredients: "Whole Wheat Flour (70g), Potatoes (60g), Butter (15g), Cooking Oil / Ghee (10g), Spices and Condiments [Green chillies, fresh coriander, cumin powder, ajwain, amchur/dry mango powder, salt] (5g).",
+		scientific: "Triticum aestivum (Wheat), Solanum tuberosum (Potato), Bos taurus (Butter/Milk fat), Helianthus annuus / Milk fats (Oil/Ghee), Trachyspermum ammi (Ajwain), Cuminum cyminum (Cumin).",
+		cooking: "Knead whole wheat flour into a soft dough. Mash boiled potatoes and mix with spices, green chillies, and herbs. Stuff the dough with the potato filling, seal, and roll into a flatbread. Cook on a hot griddle with oil or ghee until golden-brown and top with melting butter."
+            },
+            {
+                name: "2. Ash Gourd Fry",
+		kcal: "110 Kcals",
+		image: "",
+		ingredients: "Ash Gourd / Winter Melon (110g), Cooking Oil (12g), Onions (20g), Green Chillies & Dried Red Chillies (5g), Spices and Condiments [Mustard seeds, cumin, turmeric, asafoetida/hing, salt] (3g), Fresh Coriander Leaves (As garnish).",
+		scientific: "Benincasa hispida (Ash Gourd), Helianthus indicus / Sesamum indicum (Cooking Oil), Brassica species (Mustard Seeds), Ferula foetida (Asafoetida).",
+		cooking: "Peel, deseed, and chop ash gourd into small pieces. Splutter mustard seeds, cumin, and asafoetida in hot oil with chillies, sauté chopped onions, add ash gourd with turmeric and salt, and pan-fry until tender and lightly browned. Garnish with fresh coriander leaves."            
+	    },
+            {
+                name: "3. Banana Flower Fry",
+		kcal: "160 Kcals",
+		image: "",
+		ingredients: "Banana Flower / Blossom (Vazhaipoo) (100g), Onions & Tomatoes (30g), Cooking Oil (15g), Split Chana Dal / Moong Dal (10g), Ginger, Garlic & Green Chillies (8g), Spices and Condiments [Mustard seeds, cumin, turmeric, coriander powder, chili powder, asafoetida, salt] (5g), Fresh Curry Leaves & Coriander Leaves (5g).",
+		scientific: "Musa acuminata / Musa balbisiana (Banana Flower), Cicer arietinum / Vigna radiata (Chana/Moong Dal), Helianthus annuus / Sesamum indicum (Cooking Oil), Brassica species (Mustard Seeds), Ferula foetida (Asafoetida).",
+		cooking: "Clean banana flower florets by removing the pistil and calyx, chop, and soak to remove astringency. Splutter mustard seeds, cumin, split pulses, asafoetida, and curry leaves in hot oil, sauté onions, green chillies, and ginger-garlic paste, then add drained banana flower with spices and salt, cover to cook tender, and finish by roasting dry and garnishing with coriander."            
+	   },
+           {
+               name: "4. Banana Fry",
+	       kcal: "210 Kcals",
+	       image: "",
+	       ingredients: "Raw Plantain / Green Banana (90g), Cooking Oil (20g), Spices and Condiments [Turmeric powder, red chili powder, coriander powder, asafoetida, salt] (7g), Curry Leaves (3g).",
+	       scientific: "Musa paradisiaca (Raw Plantain), Helianthus annuus / Cocos nucifera (Cooking Oil), Curcuma longa (Turmeric), Capsicum annuum (Red Chili).",
+               cooking: "Peel and slice raw green plantains into uniform discs, soak briefly in turmeric water, drain, and toss with salt, turmeric, red chili, and coriander powders. Pan-fry the seasoned slices in a single layer with oil and curry leaves on medium-low heat, flipping periodically until golden-crusted and tender inside."            
+           },
+           {
+               name: "5. Banana Stem Fry",
+	       kcal: "130 Kcals",
+	       image: "",
+	       ingredients: "Banana Stem / Plantain Pith (Vazhaithandu) (110g), Onions & Tomatoes (25g), Cooking Oil (12g), Split Moong Dal / Chana Dal (8g), Ginger, Garlic, & Green Chillies (5g), Spices and Condiments [Mustard seeds, cumin, turmeric, coriander powder, asafoetida/hing, salt] (5g), Fresh Curry Leaves & Coriander Leaves (5g).",
+	       scientific: "Musa acuminata / Musa balbisiana (Banana Stem), Vigna radiata / Cicer arietinum (Moong/Chana Dal), Helianthus annuus / Cocos nucifera (Cooking Oil), Brassica species (Mustard Seeds), Ferula foetida (Asafoetida).",
+	       cooking: "Peel outer fibrous layers of banana stem, slice, dice, and immerse in buttermilk or sour water to prevent oxidation and remove string fibers. Splutter mustard seeds, cumin, split pulses, asafoetida, and curry leaves in hot oil, sauté onions, green chillies, and ginger-garlic paste, add drained banana stem with spices and salt, cover to steam until tender, and evaporate remaining moisture to achieve a dry, roasted finish garnished with fresh coriander."            
+  	   },
+           {
+               name: "6. Beans Fry",
+	       kcal: "135 Kcals",
+	       image: "",
+	       ingredients: "French Beans / Green Beans (110g), Fresh Grated Coconut (15g), Cooking Oil (12g), Onions (20g), Split Chana Dal / Urad Dal (8g), Green Chillies & Dried Red Chillies (5g), Spices and Condiments [Mustard seeds, cumin, turmeric, asafoetida, salt] (4g), Fresh Curry Leaves (3g).",
+	       scientific: "Phaseolus vulgaris (French Bean), Cocos nucifera (Coconut), Cicer arietinum / Vigna mungo (Chana/Urad Dal), Helianthus annuus / Cocos nucifera (Cooking Oil), Brassica species (Mustard Seeds), Ferula foetida (Asafoetida).",
+	       cooking: "Wash, trim, and finely chop green beans. Splutter mustard seeds, cumin, split chana and urad dal, asafoetida, curry leaves, and dried red chillies in hot oil. Sauté chopped onions and green chillies until translucent, add beans with turmeric and salt, cover, and cook on medium-low heat until tender-crisp. Toss in fresh grated coconut, sauté for a couple of minutes to blend flavors, and serve hot."            
+	   },
+           {
+               name: "7. Bell Pepper Fry",
+               kcal: "125 Kcals",
+               image: "",
+               ingredients: "Bell Peppers / Capsicum (110g), Onions (30g), Cooking Oil (12g), Roasted Peanut or Sesame Powder / Besan (10g), Ginger, Garlic, & Green Chillies (5g), Spices and Condiments [Mustard seeds, cumin, turmeric, coriander powder, red chili powder, garam masala, salt] (5g), Fresh Coriander Leaves (As garnish).",
+               scientific: "Capsicum annuum (Bell Pepper), Helianthus annuus / Arachis hypogaea (Cooking Oil), Cicer arietinum / Arachis hypogaea (Besan/Peanut), Cuminum cyminum / Coriandrum sativum (Cumin/Coriander).",
+               cooking: "Wash, core, and slice bell peppers into long strips or chunks. Splutter mustard and cumin seeds in hot oil, sauté sliced onions, minced ginger-garlic, and green chillies until translucent, add bell pepper strips with spices and salt, stir-fry on medium-high heat until tender-crisp, and finish by dusting with roasted peanut powder or gram flour and garnishing with fresh coriander leaves."            
+           },
+           {
+               name: "8. Bisi Bele Bath",
+	       kcal: "280 Kcals",
+	       image: "",
+               ingredients: "Rice & Toor Dal (90g), Mixed Vegetables (50g), Ghee or Cooking Oil (15g), Tamarind Extract & Jaggery (10g), Cashew Nuts (10g), Bisi Bele Bath Masala Powder (10g), Onions & Tomatoes (20g), Fresh Curry Leaves & Coriander Leaves (5g), Salt & Water (As required).",
+               scientific: "Oryza sativa / Cajanus cajan (Rice/Toor Dal), Bos taurus / Anacardium occidentale (Ghee/Cashew), Anacardium occidentale (Cashew Nuts).",
+               cooking: "Pressure-cook rice and yellow pigeon peas (toor dal) with water, turmeric, and salt until soft and mushy. Sauté mixed vegetables, onions, and tomatoes, then simmer with extracted tamarind juice, jaggery, and Bisi Bele Bath masala powder. Blend the cooked rice-dal mixture into the vegetable-spice broth to achieve a smooth, porridge-like texture, and top with a tempering of ghee-fried cashew nuts and curry leaves."              
+           },
+           {
+               name: "9. Bittergourd Spicy Fry",
+	       kcal: "180 Kcals",
+               image: "",
+               ingredients: "Bitter Gourd / Bitter Melon (90g), Cooking Oil (20g), Onions (25g), Tamarind Extract or Jaggery (5g), Ginger-Garlic Paste (5g), Spices and Condiments [Red chili powder, turmeric powder, coriander powder, cumin, fennel seeds, salt] (7g), Gram Flour / Besan or Rice Flour (8g).",
+               scientific: "Momordica charantia (Bitter Gourd), Helianthus annuus / Arachis hypogaea (Cooking Oil), Foeniculum vulgare / Cuminum cyminum (Fennel/Cumin), Cicer arietinum (Gram Flour).",
+               cooking: "Wash and slice bitter gourd into thin roundels or half-moons, remove inner seeds, rub with salt and turmeric, let rest, and squeeze out excess bitter juices. Toss the slices with red chili powder, turmeric, coriander powder, and optionally a light coating of gram flour or rice flour. Pan-fry in hot oil on medium-low heat, stirring occasionally, until deeply browned, caramelized, and crisp, then drain and serve hot."            
+           },
+           {
+               name: "10. Bottle Gourd Stir Fry",
+               kcal: "115 Kcals",
+               image: "",
+               ingredients: "Bottle Gourd / Calabash (Lauki / Sorakkai) (110g), Onions & Tomatoes (25g), Cooking Oil (12g), Split Moong Dal or Chana Dal (10g), Ginger, Garlic, & Green Chillies (5g), Spices and Condiments [Mustard seeds, cumin, turmeric, coriander powder, asafoetida/hing, salt] (5g), Fresh Curry Leaves & Coriander Leaves (5g).",
+               scientific: "Lagenaria siceraria (Bottle Gourd), Vigna radiata / Cicer arietinum (Moong/Chana Dal), Helianthus annuus / Cocos nucifera (Cooking Oil), Brassica species (Mustard Seeds), Ferula foetida (Asafoetida).",
+               cooking: "Peel, slice, and chop bottle gourd into small, uniform cubes. Splutter mustard seeds, cumin seeds, split pulses, asafoetida, fresh curry leaves, and dried red chillies in hot oil. Sauté chopped onions, minced ginger-garlic, and green chillies until soft and translucent, add chopped bottle gourd cubes with turmeric powder, coriander powder, and salt, cook on medium heat until tender, evaporate remaining liquid by stirring uncovered, and garnish with fresh coriander leaves before serving."            
+           },
+           {
+               name: "11. Garlic Lemon Broccoli",
+               kcal: "110 Kcals",
+               image: "",
+               ingredients: "Broccoli Florets (110g), Fresh Garlic (12g), Fresh Lemon (Juice and Zest) (15g), Olive Oil or Cooking Oil (12g), Sliced Almonds (8g), Spices and Condiments [Black pepper, sea salt/salt] (3g).",
+               scientific: "Brassica oleracea var. italica (Broccoli), Olea europaea / Oilseed crops (Olive/Cooking Oil), Prunus dulcis (Almonds), Allium sativum (Garlic), Citrus limon (Lemon).",
+               cooking: "Wash and cut broccoli into uniform bite-sized florets, mince or slice garlic, and toast almonds. Gently sauté sliced garlic in olive oil or cooking oil until fragrant and golden, add broccoli florets with a splash of water, cover briefly to steam until tender-crisp and vibrant green, toss with fresh lemon zest, lemon juice, sea salt, and cracked black pepper, and finish with toasted sliced almonds before serving."            
+           },
+           {
+               name: "12. Butter Kulcha",
+               kcal: "410 Kcals",
+               image: "",
+               ingredients: "Refined Wheat Flour (Maida) (90g), Yogurt / Curd & Milk (15g), Baking Powder & Baking Soda (2g), Butter or Ghee (15g), Water & Sugar (As required), Salt (2g), Nigella Seeds (Kalonji) & Fresh Coriander Leaves (4g).",
+               scientific: "Triticum aestivum (Refined Wheat Flour), Bos taurus (Yogurt/Butter/Milk), Nigella sativa (Nigella Seeds).",
+               cooking: "Knead refined flour with yogurt, baking powder, baking soda, sugar, salt, and water into a soft dough and let rest. Divide into portions, roll into ovals, and press nigella seeds and coriander onto the surface. Cook on a hot cast-iron skillet or tandoor until fluffy and lightly charred, then brush generously with melted butter before serving."            
+           },
+           {
+               name: "13. Cabbage Fry",
+               kcal: "120 Kcals",
+               image: "",
+               ingredients: "Shredded Cabbage (110g), Cooking Oil (12g), Onions (20g), Split Chana Dal or Urad Dal (8g), Green Chillies & Dried Red Chillies (5g), Spices and Condiments [Mustard seeds, cumin, turmeric powder, asafoetida, salt] (4g), Fresh Curry Leaves & Coriander Leaves (5g).",
+               scientific: "Brassica oleracea var. capitata (Cabbage), Cicer arietinum / Vigna mungo (Chana/Urad Dal), Helianthus annuus / Cocos nucifera (Cooking Oil), Brassica species (Mustard Seeds), Ferula foetida (Asafoetida).",
+               cooking: "Wash and finely shred the cabbage. Splutter mustard seeds, cumin seeds, split pulses, asafoetida, fresh curry leaves, and dried red chillies in hot oil until golden. Sauté sliced onions and green chillies until translucent, add shredded cabbage with turmeric powder and salt, cook on medium-high heat while stirring frequently until the cabbage softens and develops light golden edges, and finish by garnishing with fresh coriander leaves."            
+           },
+           {
+               name: "14. Cauliflower Fry",
+               kcal: "190 Kcals",
+               image: "",
+               ingredients: "Cauliflower Florets (100g), Gram Flour / Besan & Rice Flour (20g), Cooking Oil (20g), Ginger-Garlic Paste (8g), Spices and Condiments [Red chili powder, turmeric powder, coriander powder, garam masala, salt] (7g), Fresh Curry Leaves & Green Chillies (5g).",
+               scientific: "Brassica oleracea var. botrytis (Cauliflower), Cicer arietinum / Oryza sativa (Gram Flour/Rice Flour), Helianthus annuus / Arachis hypogaea (Cooking Oil), Capsicum annuum (Red Chili).",
+               cooking: "Soak separated cauliflower florets briefly in hot turmeric water, then toss in a thick batter made from gram flour, rice flour, ginger-garlic paste, red chili powder, turmeric, garam masala, and salt. Fry the coated florets in hot oil in batches along with fresh curry leaves and green chillies until golden brown and crispy, drain excess oil, and serve hot."            
+           },
+           {
+               name: "15. Chappathis",
+               kcal: "210 Kcals",
+               image: "",
+               ingredients: "Whole Wheat Flour (Atta) (60g), Water (35g), Cooking Oil or Ghee (5g), Salt (A pinch).",
+               scientific: "Triticum aestivum (Wheat), Bos taurus / Oilseed crops (Ghee/Cooking Oil).",
+               cooking: "Knead whole wheat flour with a pinch of salt and gradual amounts of water into a smooth, pliable dough and rest for 15-20 minutes. Divide into equal balls, dust with dry flour, and roll out into thin circular discs. Cook on a preheated dry cast-iron griddle, flip once bubbles appear, expose directly to open flame to puff up from trapped steam, and optionally brush with a touch of ghee before serving."            
+           },
+           {
+               name: "16. Curd Rice",
+	       kcal: "220 Kcals",
+	       image: "",
+	       ingredients: "Cooked White Rice (110g), Fresh Curd / Yogurt (60g), Milk (15g), Cooking Oil or Ghee (8g), Split Urad Dal & Chana Dal (6g), Green Chillies, Ginger, & Coriander Leaves (5g), Spices and Condiments [Mustard seeds, cumin, asafoetida/hing, salt] (4g), Fresh Curry Leaves & Pomegranate Arils / Grapes (5g).",
+	       scientific: "Oryza sativa (Rice), Bos taurus (Curd/Milk/Ghee), Vigna mungo / Cicer arietinum (Urad/Chana Dal), Brassica species (Mustard Seeds), Ferula foetida (Asafoetida).",
+	       cooking: "Thoroughly mash warm cooked white rice, let cool slightly, and mix with fresh curd, a splash of milk, and salt. Heat oil or ghee to splutter mustard seeds, cumin, split urad dal, chana dal, asafoetida, ginger, green chillies, and curry leaves, pour the hot tempering over the rice mixture, and garnish with fresh coriander leaves and pomegranate arils or grapes before serving."            
+	   },
+           {
+               name: "17. Dal Tadka with Basmati Rice",
+	       kcal: "320 Kcals",
+ 	       image: "",
+	       ingredients: "Basmati Rice (100g), Yellow Pigeon Peas / Toor Dal (60g), Ghee or Cooking Oil (15g), Onions & Tomatoes (35g), Ginger, Garlic, & Green Chillies (8g), Spices and Condiments [Cumin seeds, mustard seeds, turmeric powder, red chili powder, garam masala, asafoetida/hing, salt] (6g), Fresh Coriander Leaves & Sliced Vegetables (15g).",
+	       scientific: "Oryza sativa (Basmati Rice), Cajanus cajan (Toor Dal), Bos taurus / Oilseed crops (Ghee/Cooking Oil), Cuminum cyminum (Cumin), Ferula foetida (Asafoetida).",
+	       cooking: "Rinse and boil basmati rice until fluffy and separate-grained. Pressure-cook toor dal with water, turmeric, and salt until soft and smooth. Prepare the tempering by heating ghee or oil, sautéing cumin seeds, garlic, ginger, green chillies, onions, and tomatoes, and blooming red chili powder and garam masala. Pour the cooked dal into the tempering, simmer to meld flavors, and serve hot alongside the fragrant basmati rice garnished with fresh coriander leaves."            
+	   },
+           {
+               name: "18. Drumstick and Brinjal Gravy",
+	       kcal: "190 Kcals",
+	       image: "",
+	       ingredients: "Drumstick & Brinjal / Eggplant (110g), Cooking Oil (15g), Onions & Tomatoes (40g), Tamarind Extract & Jaggery (15g), Fresh Coconut or Roasted Sesame/Peanut Paste (15g), Ginger, Garlic, & Green Chillies (5g), Spices and Condiments [Mustard seeds, cumin, turmeric powder, coriander powder, red chili powder, fenugreek/methi, salt] (6g), Fresh Curry Leaves & Coriander Leaves (5g).",
+	       scientific: "Moringa oleifera (Drumstick), Solanum melongena (Brinjal), Tamarindus indica (Tamarind), Trigonella foenum-graecum (Fenugreek), Cocos nucifera / Sesamum indicum (Coconut/Sesame).",
+	       cooking: "Wash and cut drumsticks into finger-length pieces and quarter brinjals. Splutter mustard seeds, cumin, fenugreek seeds, and curry leaves in hot oil, then sauté onions, ginger-garlic, and tomatoes until soft. Add the vegetables with turmeric, coriander powder, red chili powder, salt, tamarind juice, and water, simmer until tender, stir in ground coconut or sesame paste to thicken the gravy, and garnish with fresh coriander leaves."            
+  	   },
+           {
+               name: "19. Idli",
+	       kcal: "260 Kcals",
+	       image: "",
+	       ingredients: "Parboiled Rice or Idli Rice (120g), Urad Dal / Split Black Gram (40g), Fenugreek Seeds (4g), Water (As required), Salt (6g).",
+	       scientific: "Oryza sativa (Rice), Vigna mungo (Urad Dal), Trigonella foenum-graecum (Fenugreek Seeds).",
+	       cooking: "Soak rice, urad dal, and fenugreek seeds separately for 4 to 6 hours, grind urad dal into a fluffy aerated batter and rice to a slightly coarse texture, combine with salt, and let ferment for 8 to 12 hours. Ladle the fermented batter into greased idli plates and steam in a steamer or pressure cooker without weight for 10 to 12 minutes until fluffy and firm before serving."            
+	   },
+           {
+               name: "20. Kadai Paneer",
+	       kcal: "280 Kcals",
+	       image: "",
+	       ingredients: "Paneer / Indian Cottage Cheese (100g), Bell Peppers / Capsicum & Onions (60g), Tomatoes & Onion Paste (50g), Ghee or Cooking Oil (15g), Ginger, Garlic, & Green Chillies (8g), Kadai Masala Spices [Whole coriander seeds, dried red chillies, cumin, black peppercorns] (8g), Kasuri Methi & Fresh Coriander (5g), Salt (As required).",
+	       scientific: "Bos taurus (Paneer/Ghee), Capsicum annuum / Solanum lycopersicum (Capsicum/Tomato), Trigonella foenum-graecum (Kasuri Methi).",
+	       cooking: "Dry-roast whole coriander seeds, dried red chillies, and peppercorns, then coarsely grind into a fresh kadai masala. Flash-sauté bell pepper chunks and onion squares in a hot wok with oil, lightly pan-sear paneer cubes, and set aside. In the same wok, sauté ginger-garlic paste, tomato puree, and onions with turmeric and salt until oil separates, then toss in the ground kadai masala, sautéed vegetables, and paneer cubes, finishing with crushed kasuri methi and fresh coriander leaves before serving."            
+	   },
+           {
+               name: "21. Kichadi",
+	       kcal: "250 Kcals",
+	       image: "",
+	       ingredients: "Rice & Split Yellow Moong Dal (90g), Ghee or Cooking Oil (12g), Mixed Vegetables (30g), Ginger, Cumin Seeds, & Black Peppercorns (6g), Spices and Condiments [Turmeric powder, asafoetida/hing, salt] (4g), Fresh Curry Leaves & Coriander Leaves (5g), Water (As required).",
+	       scientific: "Oryza sativa (Rice), Vigna radiata (Moong Dal), Bos taurus (Ghee), Cuminum cyminum (Cumin), Piper nigrum (Black Pepper), Ferula foetida (Asafoetida).",
+	       cooking: "Wash and soak rice and split yellow moong dal for 15-20 minutes. Heat ghee in a pressure cooker or pot, sizzle cumin seeds, black peppercorns, asafoetida, ginger, and curry leaves, toss in mixed vegetables and turmeric, add the drained rice and dal with ample water and salt, pressure-cook until soft and thoroughly combined into a smooth porridge texture, and finish with fresh coriander leaves and a final drizzle of ghee before serving."            
+	   },
+           {
+               name: "22. Lemon Rice",
+	       kcal: "240 Kcals",
+	       image: "",
+	       ingredients: "Cooked White Rice (120g), Fresh Lemon Juice (15g), Cooking Oil or Ghee (12g), Peanuts or Cashew Nuts (10g), Split Chana Dal & Urad Dal (8g), Green Chillies, Dried Red Chillies, & Ginger (6g), Spices and Condiments [Mustard seeds, cumin, turmeric powder, asafoetida/hing, salt] (5g), Fresh Curry Leaves & Coriander Leaves (5g).",
+	       scientific: "Oryza sativa (Rice), Arachis hypogaea / Anacardium occidentale (Peanuts/Cashews), Cicer arietinum / Vigna mungo (Chana/Urad Dal), Citrus limon (Lemon).",
+	       cooking: "Spread freshly cooked rice on a wide plate to cool completely so grains remain separate. Heat oil in a pan, roast mustard seeds, cumin, split chana dal, urad dal, and peanuts or cashews until golden and crunchy, then toss in green chillies, dried red chillies, ginger, curry leaves, asafoetida, and turmeric. Pour the hot tempering over the cooled rice, add salt and fresh lemon juice, gently toss to combine without mashing, and garnish with fresh coriander leaves before serving."            
+	   },
+           {
+               name: "23. Malai Kofta",
+	       kcal: "380 Kcals",
+	       image: "",
+	       ingredients: "Paneer & Boiled Potatoes (100g), Cashew Nuts, Melon Seeds, & Cream (40g), Onions & Tomatoes (50g), Cooking Oil or Ghee (25g), Cornflour or All-Purpose Flour (10g), Ginger, Garlic, & Green Chillies (8g), Spices and Condiments [Cumin, cardamom, cinnamon, cloves, turmeric, red chili powder, garam masala, salt] (6g), Fresh Coriander Leaves & Kasuri Methi (5g).",
+	       scientific: "Bos taurus (Paneer/Cream/Ghee), Solanum tuberosum (Potato), Anacardium occidentale (Cashew Nuts), Cucurbitaceae (Melon Seeds).",
+	       cooking: "Mix grated paneer, mashed boiled potatoes, cornflour, and salt, shape into balls, and fry until golden. Blend sautéed onions, tomatoes, ginger, garlic, and soaked cashew nuts into a smooth puree. Sauté whole aromatic spices in oil or ghee, cook the blended puree with spices and cream until rich, pour the hot creamy gravy over the fried koftas, and finish with fresh cream, kasuri methi, and coriander leaves before serving."            
+	   },
+           {
+               name: "24. Masala Dosa",
+	       kcal: "310 Kcals",
+	       image: "",
+	       ingredients: "Parboiled Rice & Urad Dal (90g), Boiled Potatoes & Onions (80g), Cooking Oil or Ghee (15g), Split Chana Dal & Urad Dal (6g), Green Chillies, Ginger, & Curry Leaves (6g), Spices and Condiments [Mustard seeds, turmeric powder, asafoetida/hing, salt] (4g), Fresh Coriander Leaves (5g).",
+	       scientific: "Oryza sativa (Rice), Vigna mungo (Urad Dal), Solanum tuberosum (Potato), Allium cepa (Onion), Brassica species (Mustard Seeds).",
+	       cooking: "Soak and grind rice and urad dal into a smooth batter, and ferment for 8-12 hours. Prepare the potato filling by sautéing mustard seeds, split chana dal, urad dal, green chillies, ginger, curry leaves, onions, and turmeric in oil, then mixing with coarse boiled potatoes. Pour a ladleful of batter onto a hot cast-iron griddle, spread thin into a crepe, drizzle oil or ghee around the edges until golden and crisp, place the potato masala inside, fold over, and serve hot."            
+	   },
+           {	
+	       name: "25. Matar Paneer",
+	       kcal: "260 Kcals",
+	       image: "",
+	       ingredients: "Paneer / Indian Cottage Cheese (90g), Green Peas / Matar (70g), Onions & Tomatoes (50g), Ghee or Cooking Oil (15g), Ginger, Garlic, & Green Chillies (8g), Spices and Condiments [Cumin seeds, turmeric powder, coriander powder, red chili powder, garam masala, salt] (6g), Fresh Coriander Leaves (5g).",
+	       scientific: "Bos taurus (Paneer/Ghee), Pisum sativum (Green Peas), Solanum lycopersicum (Tomato), Allium cepa (Onion), Cuminum cyminum (Cumin).",
+	       cooking: "Lightly pan-sear paneer cubes in oil or ghee and soak briefly in warm water to keep soft. Sauté chopped onions, ginger-garlic paste, and tomatoes with turmeric, coriander powder, red chili powder, and salt until oil separates. Add green peas and water, simmer until tender, fold in the paneer cubes and garam masala, simmer for 2-3 minutes, and garnish with fresh coriander leaves before serving."           
+	   },
+           {    
+	       name: "26. South Indian Traditional Meals (Thali)",
+	       kcal: "850-1000 Kcals",
+	       image: "",
+	       ingredients: "Basmati / Sona Masuri Rice (180g), Puri or Appalam/Papad (30g), Toor Dal & Sambar Lentils (70g), Curd / Yogurt & Buttermilk (80g), Mixed Regional Sabzis, Poriyals, & Gravies (150g), Cooking Oil, Ghee, & Tempering Fats (35g), Spices, Tamarind, Coconut, & Condiments (30g).",
+	       scientific: "Oryza sativa (Rice), Cajanus cajan (Toor Dal), Bos taurus (Curd/Ghee), Cocos nucifera (Coconut).",
+	       cooking: "Steam rice fresh, prepare spiced sambar and rasam with tamarind and lentils, sauté vegetable poriyals and sabzis with mustard seeds, curry leaves, and grated coconut, and arrange all items radially around rice and accompaniments on a banana leaf or traditional platter for serving."            
+	   },
+	   {
+               name: "27. Naan",
+	       kcal: "340 Kcals",
+	       image: "",
+	       ingredients: "Refined Wheat Flour (Maida) (90g), Yogurt / Curd & Milk (15g), Yeast or Baking Powder / Baking Soda (2g), Ghee or Butter (10g), Water & Sugar (As required), Salt (2g), Nigella Seeds (Kalonji) & Fresh Coriander Leaves (3g).",
+	       scientific: "Triticum aestivum (Refined Wheat Flour), Bos taurus (Yogurt/Milk/Butter/Ghee), Nigella sativa (Nigella Seeds).",
+	       cooking: "Knead refined flour with yogurt, milk, sugar, salt, leavening agent, and water into an elastic dough and proof. Divide into portions, stretch or roll into tear-drop shapes, press nigella seeds and coriander onto the surface, bake rapidly inside a blazing hot clay tandoor oven, and brush generously with melted butter or ghee right upon removal before serving."
+	   },
+           {
+               name: "28. Onion Uthappam",
+	       kcal: "210 Kcals",
+	       image: "",
+	       ingredients: "Parboiled Rice & Urad Dal (90g), Finely Chopped Onions (40g), Cooking Oil or Ghee (12g), Green Chillies, Ginger, & Fresh Coriander Leaves (8g), Spices and Condiments [Cumin seeds, salt] (3g), Water (As required).",
+	       scientific: "Oryza sativa (Rice), Vigna mungo (Urad Dal), Allium cepa (Onions).",
+	       cooking: "Pour a generous ladleful of thick fermented rice and urad dal batter onto a hot griddle, scatter finely chopped onions, green chillies, ginger, and coriander over the surface and press down gently, cook on medium heat with a drizzle of oil or ghee while covered to steam the thick center, flip briefly to caramelize the onions, and serve hot with chutney and sambar."
+	   },
+           {
+               name: "29. Palak Paneer",
+	       kcal: "240 Kcals",
+	       image: "",
+	       ingredients: "Spinach / Palak (120g), Paneer / Indian Cottage Cheese (70g), Onions & Tomatoes (40g), Ghee or Cooking Oil (12g), Ginger, Garlic, & Green Chillies (8g), Spices and Condiments [Cumin seeds, turmeric powder, coriander powder, garam masala, salt] (5g), Fresh Cream or Milk (10g).",
+	       scientific: "Spinacia oleracea (Spinach), Bos taurus (Paneer/Ghee/Cream).",
+	       cooking: "Blanch fresh spinach leaves in boiling water, plunge into ice water, and blend into a smooth puree. Sauté onions, ginger, garlic, and green chillies in ghee or oil until golden, add tomatoes and spices to cook down into a rich base, stir in the spinach puree and simmer gently, fold in paneer cubes and garam masala, and finish with a swirl of fresh cream before serving hot."
+	   },
+           {
+               name: "30. Pasta (Tomato Herb Penne)",
+	       kcal: "290 Kcals",
+	       image: "",
+	       ingredients: "Penne Pasta (90g), Ripe Tomatoes & Tomato Puree (80g), Extra Virgin Olive Oil or Cooking Oil (15g), Onions & Garlic (30g), Parmesan Cheese or Grated Hard Cheese (15g), Spices and Condiments [Italian seasoning, dried oregano, red chili flakes, black pepper, salt] (5g), Fresh Basil or Parsley Leaves (5g).",
+	       scientific: "Triticum durum (Durum Wheat Pasta), Solanum lycopersicum (Tomatoes), Bos taurus (Parmesan Cheese).",
+	       cooking: "Boil penne pasta in aggressively salted water until al dente and drain while reserving starchy water. Sauté minced garlic and chopped onions in olive oil until fragrant, add tomatoes, oregano, chili flakes, salt, and black pepper, and simmer until the sauce thickens. Toss the cooked pasta directly into the sauce with a splash of reserved pasta water to emulsify, and finish with grated parmesan cheese and fresh basil or parsley before serving."
+	   },
+           {
+               name: "31. Vermicelli Payasam (Semiya Kheer)",
+	       kcal: "260 Kcals",
+	       image: "",
+	       ingredients: "Wheat Vermicelli (Seviyan) (40g), Milk (100g), Sugar or Jaggery (30g), Ghee (12g), Cashew Nuts & Raisins (15g), Cardamom Powder & Saffron (3g).",
+	       scientific: "Triticum aestivum (Wheat Vermicelli), Bos taurus (Milk/Ghee).",
+	       cooking: "Gently sauté wheat vermicelli strands in hot ghee until golden brown, pour in milk, bring to a gentle boil, and simmer until soft. Stir in sugar or jaggery until dissolved, golden-fry cashew nuts and raisins in remaining ghee, fold them in along with cardamom powder, and serve warm or chilled.",
+	   },
+           {
+               name: "32. Phulkas",
+	       kcal: "300 Kcals",
+	       image: "",
+	       ingredients: "Whole Wheat Flour (Atta) (100g), Water (As required), Salt (1g), Ghee or Butter (10g).",
+	       scientific: "Triticum aestivum (Whole Wheat Flour), Bos taurus (Ghee/Butter).",
+	       cooking: "Knead whole wheat flour and water into a soft pliable dough, rest for 15-20 minutes, divide into equal portions, and roll into thin round disks. Cook on a preheated dry griddle until bubbles appear, flip, then place directly over an open flame to puff up into a sphere, optionally brushing with ghee before serving."
+    	   },
+           {
+               name: "33. Plain Dosa",
+	       kcal: "180 Kcals",
+	       image: "",
+	       ingredients: "Parboiled Rice & Urad Dal (90g), Cooking Oil or Ghee (10g), Fenugreek Seeds (2g), Salt (2g), Water (As required).",
+	       scientific: "Oryza sativa (Rice), Vigna mungo (Urad Dal), Trigonella foenum-graecum (Fenugreek Seeds).",
+	       cooking: "Soak rice, urad dal, and fenugreek seeds, grind into a smooth batter, and ferment overnight. Pour a ladleful onto a hot greased cast-iron griddle and spread outward in concentric circles into a thin crepe. Drizzle oil or ghee around the perimeter, cook until the base turns golden and crisp, and serve hot with chutney and sambar.",
+	   },
+           {
+               name: "34. Pongal (Ven Pongal)",
+	       kcal: "310 Kcals",
+	       image: "",
+	       ingredients: "Short-grain Rice & Split Yellow Moong Dal (90g), Ghee (20g), Cashew Nuts (10g), Cumin Seeds, Black Peppercorns, & Ginger (8g), Fresh Curry Leaves & Asafoetida (3g), Salt (As required), Water (As required).",
+	       scientific: "Oryza sativa (Rice), Vigna radiata (Moong Dal), Bos taurus (Ghee), Piper nigrum (Black Pepper), Cuminum cyminum (Cumin).",
+	       cooking: "Dry-roast split yellow moong dal until fragrant, combine with rice, water, salt, and ginger, and pressure-cook until soft and thoroughly mashed. Heat ghee and fry black peppercorns, cumin seeds, cashew nuts, curry leaves, and asafoetida until golden, pour the tempering over the rice-dal mixture, stir well, and serve piping hot."
+	   },
+           {
+               name: "35. Veg Pulao",
+	       kcal: "270 Kcals",
+	       image: "",
+	       ingredients: "Basmati Rice (90g), Mixed Vegetables (Carrots, Peas, Beans, Potatoes) (50g), Ghee or Cooking Oil (15g), Whole Spices [Bay leaf, cinnamon, cloves, green cardamom, cumin seeds] (4g), Onions, Ginger, & Garlic (25g), Spices and Condiments [Turmeric powder, garam masala, salt] (4g), Fresh Coriander & Mint Leaves (5g).",
+	       scientific: "Oryza sativa (Basmati Rice), Bos taurus (Ghee).",
+	       cooking: "Wash and soak basmati rice for 20 minutes, then drain. Heat ghee or oil, sizzle whole aromatic spices, and sauté sliced onions, ginger-garlic paste, and mixed vegetables with turmeric and salt. Gently toss in the drained basmati rice, add water, cover, and simmer on low heat until absorbed and tender, then fluff with a fork and garnish with coriander and mint leaves.",
+	   },
+           {
+               name: "36. Pumpkin Fry (Kaddu ki Sabzi)",
+	       kcal: "130 Kcals",
+	       image: "",
+	       ingredients: "Yellow Pumpkin / Red Pumpkin (120g), Cooking Oil (12g), Mustard Seeds, Cumin Seeds, & Fenugreek Seeds (4g), Green Chillies & Dry Red Chillies (3g), Jaggery or Sugar (5g), Turmeric Powder, Coriander Powder, & Salt (4g), Fresh Coriander Leaves (3g).",
+	       scientific: "Cucurbita moschata (Yellow Pumpkin).",
+	       cooking: "Peel, seed, and chop pumpkin into uniform cubes. Heat oil in a pan, crackle mustard seeds, cumin seeds, fenugreek seeds, and dry red chillies, then add the pumpkin, turmeric, and salt. Cover and cook on low heat in its own moisture until tender, stir in a touch of jaggery and coriander powder for balance, and garnish with fresh coriander leaves before serving."
+	   },
+           {
+               name: "37. Puri",
+	       kcal: "300 Kcals",
+	       image: "",
+	       ingredients: "Whole Wheat Flour / Atta & touch of Maida (75g), Cooking Oil / Ghee (for deep frying) (20g), Water (As required), Salt (1g).",
+	       scientific: "Triticum aestivum (Whole Wheat Flour).",
+	       cooking: "Knead whole wheat flour with water into a tight, firm dough and rest briefly. Roll out small portions into even circular disks, drop individually into smoking hot oil, gently press with a slotted spoon to puff into a golden sphere, drain excess oil, and serve hot.",
+	   },
+           {
+               name: "38. Puttu & Kadala Curry",
+	       kcal: "380 Kcals",
+	       image: "",
+	       ingredients: "Coarse Rice Flour & Grated Coconut (80g), Black Chickpeas / Kadala (60g), Onions, Tomatoes, & Coconut Paste/Milk (50g), Cooking Oil or Coconut Oil (12g), Ginger, Garlic, & Green Chillies (8g), Spices and Condiments [Mustard seeds, fennel seeds, coriander powder, turmeric, garam masala, curry leaves, salt] (6g), Water (As required).",
+	       scientific: "Oryza sativa (Rice Flour), Cicer arietinum (Black Chickpeas), Cocos nucifera (Coconut).",
+	       cooking: "Moisten coarse rice flour with water and salt, layer alternately with grated coconut in a cylindrical puttu mold, and steam. Pressure-cook soaked black chickpeas until tender. Sauté onions, ginger-garlic paste, and tomatoes in coconut oil with spices, add the boiled chickpeas and coconut paste/milk, simmer until thick, and serve hot with the steamed puttu."
+       	   },
+           {
+               name: "39. Rajma Curry (Kidney Bean Curry)",
+	       kcal: "230 Kcals",
+	       image: "",
+	       ingredients: "Red Kidney Beans / Rajma (90g boiled equivalent), Onions & Tomatoes (70g), Cooking Oil or Ghee (12g), Ginger, Garlic, & Green Chillies (8g), Spices and Condiments [Cumin seeds, turmeric powder, coriander powder, red chili powder, garam masala, salt] (5g), Fresh Coriander Leaves (5g), Water (As required).",
+	       scientific: "Phaseolus vulgaris (Red Kidney Beans), Bos taurus (Ghee).",
+	       cooking: "Soak kidney beans overnight and pressure-cook until tender. Sauté finely chopped onions, ginger, and garlic in oil or ghee until golden, add tomatoes and ground spices until oil separates, then stir in the boiled beans with their cooking water and simmer until the gravy thickens. Finish with garam masala and fresh coriander leaves before serving.",
+	   },
+           {
+               name: "40. Rava Dosa",
+	       kcal: "200 Kcals",
+	       image: "",
+	       ingredients: "Semolina / Sooji (Rava) (50g), Rice Flour & All-Purpose Flour (Maida) (30g), Curd or Butter Milk (20g), Cooking Oil or Ghee (15g), Cumin Seeds, Black Peppercorns, Green Chillies, & Ginger (6g), Finely Chopped Onions & Fresh Coriander Leaves (20g), Water (As required).",
+	       scientific: "Triticum durum (Semolina), Oryza sativa (Rice Flour), Bos taurus (Curd/Buttermilk).",
+	       cooking: "Whisk semolina, rice flour, and all-purpose flour with curd, water, salt, and cumin seeds into a thin, watery batter, rest briefly, and mix in chopped onions, green chillies, black peppercorns, and coriander. Splash and pour the thin batter from a height across a hot greased griddle to form a lacy network, drizzle oil or ghee around the edges, cook until deeply golden and crisp, and serve hot."
+	   },
+           {
+               name: "41. Sambar Rice (Bisi Bele Bath style / Sadham)",
+	       kcal: "290 Kcals",
+	       image: "",
+	       ingredients: "Rice & Split Yellow Moong Dal / Toor Dal (80g), Mixed Vegetables [Drumstick, Carrots, Beans, Pumpkin] (60g), Tamarind Pulp & Sambar Powder (15g), Ghee or Cooking Oil (15g), Shallots, Tomatoes, & Garlic (30g), Mustard Seeds, Cumin Seeds, Dry Red Chillies, & Fresh Curry Leaves (5g), Water (As required).",
+	       scientific: "Oryza sativa (Rice), Cajanus cajan / Vigna radiata (Lentils), Tamarindus indica (Tamarind), Bos taurus (Ghee).",
+	       cooking: "Pressure-cook rice and lentils with turmeric and water until soft and thoroughly mashed. Simmer mixed vegetables, shallots, and tomatoes in tamarind extract with sambar powder and salt until tender, then fold in the rice-dal mash and simmer until flavors meld. Pour a tempering of mustard seeds, cumin seeds, dry red chillies, and curry leaves sizzled in ghee over the top and serve piping hot.",
+	   },
+           {
+               name: "42. Set Dosa (3 Pieces)",
+	       kcal: "240 Kcals",
+	       image: "",
+	       ingredients: "Parboiled Rice, Raw Rice, & Urad Dal (90g), Flattened Rice (Poha) or Puffed Rice (15g), Fenugreek Seeds (2g), Cooking Oil or Ghee (15g), Salt (2g), Water (As required).",
+	       scientific: "Oryza sativa (Rice/Poha), Vigna mungo (Urad Dal), Trigonella foenum-graecum (Fenugreek Seeds).",
+	       cooking: "Soak rice, urad dal, poha, and fenugreek seeds, grind into a smooth batter, and ferment overnight. Pour a small ladleful of batter onto a hot griddle without spreading it thin, cover with a lid to cook via steam until spongy with surface pores, lightly cook with a touch of oil or ghee, and serve in a stack with chutney, sagu, or sambar."
+	   },
+           {
+               name: "43. Snake Gourd Fry (Padavalakai Palya / Fry)",
+	       kcal: "120 Kcals",
+	       image: "",
+	       ingredients: "Snake Gourd (120g), Cooking Oil (12g), Mustard Seeds, Cumin Seeds, & Chana Dal (5g), Green Chillies & Curry Leaves (3g), Turmeric Powder, Coriander Powder, & Salt (4g), Grated Coconut (10g).",
+	       scientific: "Trichosanthes cucumerina (Snake Gourd), Cocos nucifera (Coconut).",
+	       cooking: "Scrape snake gourd, remove inner pith and seeds, and slice into thin half-moons. Heat oil in a pan, sizzle mustard seeds, cumin seeds, chana dal, green chillies, and curry leaves, add the gourd with turmeric and salt, stir-fry on medium heat until tender and lightly browned, and garnish with freshly grated coconut before serving.",
+	   },
+           {
+               name: "44. Sweet Pongal (Chakkara Pongal / Sakkarai Pongal)",
+	       kcal: "320 Kcals",
+	       image: "",
+	       ingredients: "Short-Grain Rice & Split Yellow Moong Dal (80g), Jaggery (60g), Ghee (25g), Cashew Nuts & Raisins (15g), Cardamom Powder & Edible Camphor (3g), Water / Milk (As required).",
+	       scientific: "Oryza sativa (Rice), Vigna radiata (Moong Dal), Bos taurus (Ghee).",
+	       cooking: "Pressure-cook rice and split yellow moong dal with water and/or milk until thoroughly soft. Melt jaggery with water, strain, and stir into the cooked rice-dal mixture on low heat to thicken. Golden-fry cashew nuts and raisins in a generous amount of ghee, fold them in along with cardamom powder and a pinch of edible camphor, stir well, and serve warm."
+	   },
+           {
+               name: "45. Tandoori Roti (2 Pieces)",
+	       kcal: "260 Kcals",
+	       image: "",
+	       ingredients: "Whole Wheat Flour (Atta) & All-Purpose Flour (Maida) (80g), Yogurt (Dahi) or Milk (15g), Baking Soda & Salt (2g), Water (As required), Butter or Ghee (10g).",
+	       scientific: "Triticum aestivum (Wheat Flours), Bos taurus (Yogurt/Milk/Butter/Ghee).",
+	       cooking: "Knead whole wheat flour, maida, yogurt, salt, baking soda, and water into a smooth dough, rest, divide into portions, and roll out. Brush the back with water, slap firmly against the inner wall of a hot clay tandoor oven, bake rapidly until charred spots appear, remove, brush with butter or ghee, and serve hot.",
+	   },
+           {
+               name: "46. Tomato Rice (Thakkali Sadham)",
+	       kcal: "250 Kcals",
+	       image: "",
+	       ingredients: "Cooked Rice (100g), Ripe Tomatoes (90g), Onions & Garlic (30g), Cooking Oil or Ghee (15g), Mustard Seeds, Cumin Seeds, Chana Dal, Urad Dal, & Peanuts (8g), Green Chillies, Dry Red Chillies, Curry Leaves, & Fresh Coriander (5g), Turmeric Powder, Red Chilli Powder, & Salt (4g).",
+	       scientific: "Oryza sativa (Rice), Solanum lycopersicum (Tomatoes), Bos taurus (Ghee).",
+	       cooking: "Heat oil or ghee, sizzle mustard seeds, cumin seeds, chana dal, urad dal, and peanuts, then sauté onions, chillies, garlic, and curry leaves. Add chopped tomatoes, turmeric, chilli powder, and salt, cook until soft and oil separates, gently fold in cooked rice until coated, and garnish with fresh coriander leaves before serving."
+	   },
+           {
+               name: "47. Turnip (Roasted)",
+	       kcal: "110 Kcals",
+	       image: "",
+	       ingredients: "White/Purple-Top Turnips (130g), Olive Oil or Cooking Oil (12g), Dried Herbs (Parsley, Thyme, or Rosemary) & Garlic Powder (3g), Black Pepper & Salt (3g).",
+	       scientific: "Brassica rapa (Turnip).",
+	       cooking: "Wash, peel, and chop turnips into uniform wedges, toss with oil, salt, black pepper, garlic powder, and herbs, arrange in a single layer on a baking tray, roast at 200°C until tender and golden-brown on the edges, and serve hot.",
+	   },
+           {
+               name: "48. Rava Uppuma (Sooji Upma)",
+	       kcal: "220 Kcals",
+	       image: "",
+	       ingredients: "Semolina / Sooji (Rava) (75g), Cooking Oil or Ghee (15g), Chana Dal & Urad Dal (6g), Mustard Seeds, Cumin Seeds, Green Chillies, Ginger, & Dry Red Chillies (5g), Onions & Mixed Vegetables (30g), Fresh Curry Leaves & Coriander Leaves (3g), Water (approx. 200-225ml), Salt (As required).",
+	       scientific: "Triticum durum (Semolina), Bos taurus (Ghee).",
+	       cooking: "Dry-roast semolina until fragrant and set aside. Heat oil or ghee, sizzle mustard seeds, cumin seeds, chana dal, urad dal, green chillies, ginger, dry red chillies, and curry leaves, sauté onions and mixed vegetables, add water and salt, bring to a boil, slowly stream in the roasted semolina while stirring continuously, cover and simmer until liquid is absorbed, and garnish with coriander leaves before serving."
+	   },
+           {
+               name: "49. Veg Biriyani",
+	       kcal: "310 Kcals",
+	       image: "",
+	       ingredients: "Basmati Rice (90g), Assorted Vegetables (Carrots, Potatoes, Peas, Beans, Cauliflower) (70g), Yogurt (Dahi) & Ghee or Cooking Oil (30g), Onions, Tomatoes, Ginger, & Garlic (40g), Whole & Ground Biryani Spices [Bay leaf, cloves, cardamom, cinnamon, star anise, shahi jeera, biryani masala] (6g), Fresh Mint & Coriander Leaves, Fried Onions (Barista) (10g), Water (As required).",
+	       scientific: "Oryza sativa (Basmati Rice), Bos taurus (Yogurt/Ghee).",
+	       cooking: "Marinate mixed vegetables in yogurt, ginger-garlic paste, mint, coriander, fried onions, and spices. Parboil soaked basmati rice in whole-spice-infused water until 70% cooked and drain. Layer the spiced vegetable base at the bottom of a heavy pot, top with semi-cooked rice, saffron milk, ghee, and fried onions, seal tightly to trap steam, cook on low heat (dum), and serve hot with raita.",
+	   },
+           {
+               name: "50. Veg Fried Rice",
+	       kcal: "280 Kcals",
+	       image: "",
+	       ingredients: "Cooked Long-Grain Rice (110g), Assorted Vegetables & Alliums [Carrots, Beans, Peas, Spring Onions, Garlic] (50g), Paneer Cubes / Tofu (25g), Cooking Oil / Sesame Oil (15g), Soy Sauce, Vinegar, & Chilli Sauce (10g), White/Black Pepper & Salt (3g).",
+	       scientific: "Oryza sativa (Rice), Bos taurus (Paneer).",
+	       cooking: "Spread and cool pre-cooked rice completely. Flash-sauté minced garlic and chopped crunchy vegetables in a smoking-hot wok with oil on high flame, add the cooled rice, soy sauce, vinegar, pepper, and salt, toss vigorously on maximum heat, and garnish with spring onion greens and pan-seared paneer cubes before serving."
+	   },
+           {
+               name: "51. Vegetable Kurma",
+	       kcal: "240 Kcals",
+	       image: "",
+	       ingredients: "Assorted Vegetables (Carrots, Beans, Peas, Potatoes, Cauliflower) (100g), Fresh Coconut, Roasted Gram (Daliya), & Cashew Nuts (25g), Onions, Tomatoes, Ginger, & Garlic (35g), Cooking Oil or Ghee (15g), Whole Spices [Cinnamon, Cloves, Cardamom, Bay leaf, Fennel seeds] (4g), Turmeric Powder, Coriander Powder, Red Chilli Powder, & Salt (4g), Fresh Coriander Leaves & Water (As required).",
+	       scientific: "Cocos nucifera (Coconut), Bos taurus (Ghee).",
+	       cooking: "Blend fresh coconut, roasted gram, cashew nuts, and fennel seeds into a smooth paste with water. Heat oil or ghee, sizzle whole spices, sauté onions, ginger-garlic paste, and tomatoes, then add chopped vegetables and ground spices. Add water to cook until tender, stir in the coconut-cashew paste, simmer gently until the gravy thickens, and garnish with fresh coriander leaves before serving."
+           }
+        ];
+
+        function getDynamicPassword() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            return day + month;
+        }
+
+        function verifyPassword() {
+            const inputVal = document.getElementById('password-input').value.trim();
+            const correctPassword = getDynamicPassword();
+            const errorMsg = document.getElementById('error-message');
+
+            if (inputVal === correctPassword) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+                renderDishes(dishes);
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('password-input').value = '';
+            }
+        }
+
+        function renderDishes(data) {
+            const grid = document.getElementById('dishes-grid');
+            grid.innerHTML = '';
+
+            if (data.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">No matching culinary items found.</p>';
+                return;
+            }
+
+            data.forEach(dish => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-img-container">
+                        <img src="${dish.image}" alt="${dish.name}" loading="lazy">
+                        <div class="badge-kcal">${dish.kcal}</div>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="card-title">${dish.name}</h3>
+                        <div class="section-block">
+                            <h4>Ingredients</h4>
+                            <p>${dish.ingredients}</p>
+                        </div>
+                        <div class="section-block">
+                            <h4>Scientific Classification</h4>
+                            <p>${dish.scientific}</p>
+                        </div>
+                        <div class="section-block">
+                            <h4>Cooking Methods</h4>
+                            <p>${dish.cooking}</p>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterDishes() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const filtered = dishes.filter(dish => {
+                return dish.name.toLowerCase().includes(query) ||
+                       dish.kcal.toLowerCase().includes(query) ||
+                       dish.ingredients.toLowerCase().includes(query) ||
+                       dish.scientific.toLowerCase().includes(query) ||
+                       dish.cooking.toLowerCase().includes(query);
+            });
+            renderDishes(filtered);
+        }
+
+        document.getElementById('password-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                verifyPassword();
+            }
+        });
+    </script>
+</body>
+</html>
